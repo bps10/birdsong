@@ -53,7 +53,7 @@ except ImportError, target:
     raw_input('Press enter to close this window.')
     sys.exit(1)
 
-myexit.RecordVers(version, wx.VERSION_STRING)
+#myexit.RecordVers(version, wx.VERSION_STRING)
 
 ##################
 ### USER INPUT ###

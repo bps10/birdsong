@@ -1,8 +1,6 @@
 # -*- coding: utf-8 -*-
 from __future__ import division
 import os as os
-#import matplotlib
-#matplotlib.use('QT4Agg')
 import matplotlib.pyplot as plt
 import matplotlib.mlab as mlab
 import numpy as np
@@ -16,20 +14,25 @@ class SongAnalysis(object):
     """
     """
     
-    def __init__(self, SYLLABLES, FILEDIR, MAXFILE=5, 
-                 MINFREQ=1250, STARTFILE=0, baseline=True,
+    def __init__(self, SYLLABLES, FILEDIR, BIRDNAME, CONDITION, DATE,
+                 MAXFILE, MINFREQ=1250, STARTFILE=0, baseline=True,
                  DISPLAYSYLL=False, DISPLAYSONG=False):
         """
         """
         self.MINFREQ = MINFREQ
         self.MAXFILE = MAXFILE
         self.STARTFILE = STARTFILE
+        self.BIRDNAME = BIRDNAME
+        self.DATE = DATE
+        if CONDITION == 0:
+            self.CONDITION = 'baseline'
+        else:
+            self.CONDITION = 'experiment'
         
         self.getFiles(FILEDIR)
         self.genDataStruct(SYLLABLES)
         self.findGoodSong()
-        self.cutSyllables(DISPLAYSYLL=False, DISPLAYSONG=False)
-        #self.eliminateZeros()
+        self.cutSyllables(DISPLAYSYLL, DISPLAYSONG)
         self.analysis()
         
         if not baseline:
@@ -44,19 +47,18 @@ class SongAnalysis(object):
         self.wav_index = mlab.find(endswith(FILES,'.wav'))
         self.FILES = FILES[self.wav_index] 
         
-    
     def genDataStruct(self, SYLLABLES):
         """
         """
-        syll = {
-            'duration': {},
-            'entropy': {},
-            'freq': {},
-                }
+
         self.syllables = {}
         for i in range(SYLLABLES):
-            self.syllables[i] = syll
-
+            self.syllables[i] =  {
+                    'duration': {},
+                    'entropy': {},
+                    'freq': {},
+                        }
+        
     def findGoodSong(self):
         """
         """
@@ -107,9 +109,8 @@ class SongAnalysis(object):
         song = 0
         fil = self.STARTFILE
         while fil < ENDFILE:
-            FILE = (FILEDIR+self.FILES[fil])
-            print fil
-            
+            FILE = (FILEDIR + self.FILES[fil])
+            print 'processing file: ', fil
             ## Spectrogram ##       
             p, freqs, t, im = sf.spec(FILE)
             p = p * 0.9
@@ -135,12 +136,14 @@ class SongAnalysis(object):
                             sum(np.power(SongP[:, j], 2)))
                     mean_freq[j] = fr
 
-                tt = sf.runs(SongP.mean(0) > self.THRESHOLD)
-                FOUND = tt[0].any()
+                syllFound = sf.runs(SongP.mean(0) > self.THRESHOLD)
+                FOUND = syllFound[0].any()
                 if FOUND:
-                    count = 0
-                    for syll in range(0,len(tt[0])):
-                        time = np.arange(tt[0][syll],tt[1][syll])
+ 
+                    for syll in range(0,len(syllFound[0])):
+
+                        time = np.arange(syllFound[0][syll],
+                                         syllFound[1][syll])
                         if len(time) > 200:
                             plt.close(1)
                             plt.close(2)
@@ -154,12 +157,12 @@ class SongAnalysis(object):
                                                                   self.winFreq, 
                                                                   t)
                             
-                            self.syllables[syll]['entropy'][song] = ent
-                            self.syllables[syll]['freq'][song] = mean_freq
-                            self.syllables[syll]['duration'][song] = duration
-                            
-                            count = count+1
-                            if count <= SYLLABLES:
+                            if syll <= SYLLABLES - 1:
+
+                                self.syllables[syll]['entropy'][song] = ent
+                                self.syllables[syll]['freq'][song] = mean_freq
+                                self.syllables[syll]['duration'][song] = (
+                                                                    duration)
                                 # Generate syllable spectrogram
                                 if DISPLAYSYLL == 1:
                                     Z = 10*np.log10(abs(P))
@@ -172,10 +175,9 @@ class SongAnalysis(object):
                                 plt.close(2)
                         plt.close(1)
                     song += 1
-                                
+                                   
                 if not FOUND:
-                    for meas in self.syllables[syll]:
-                        self.syllables[syll][meas] = None
+
                     plt.close(1)
                     plt.close(2)
                     if len(self.FILES) < MAXFILE + 1:
@@ -194,24 +196,23 @@ class SongAnalysis(object):
     def analysis(self):
         """
         """
-    
+
         for syll in self.syllables:
             
             #Histograms: Entropy and Frequency
-            
             #Entropy
             ent = []
             for song in self.syllables[syll]['entropy']:
                 if song is not None:
+                    
                     ent.append(self.syllables[syll]['entropy'][song])
             ent = np.array([num[0] for elem in ent for num in elem])
-            
+            #print ent
             DE_X = np.arange(-14,0.1,0.25)
             DAE,DAE_X = np.histogram(ent, bins=DE_X, density=False)
                                      
             self.syllables[syll]['dbrEnt'] = DAE
             self.syllables[syll]['binsEnt'] = DAE_X
-            print DAE
             
             #Frequency                      
             freq = []
@@ -226,15 +227,14 @@ class SongAnalysis(object):
                                      
             self.syllables[syll]['dbrFreq'] = DAF
             self.syllables[syll]['binsFreq'] = DAF_X
-            print DAF
+            
             
             #Duration, mean
             dur = []
             for song in self.syllables[syll]['duration']:
                 if song is not None:
                     dur.append(self.syllables[syll]['duration'][song])
-            #dur = np.array([num[0] for elem in dur for num in elem])       
-            print dur
+
             self.syllables[syll]['mean'] = np.mean(dur)
             self.syllables[syll]['std'] = np.std(dur)
             print self.syllables[syll]['mean']
@@ -270,21 +270,33 @@ class SongAnalysis(object):
             self.syllables[syll]['DurKS'] = ADT
             self.syllables[syll]['DurPvalKS'] = ADp
             
-    def loadPickle(self, NAME='birdAnalysis'):
+    def loadPickle(self, name=None, date=None, condition=None):
         """
         """
         from pickle import load
-        f = open(NAME, 'r')
+        
+        if not name:
+            name = self.BIRDNAME
+        if not date:
+            date = self.DATE
+        if not condition:
+            condition = self.CONDITION 
+        
+        f = open(name + date + condition + '.pickle', 'r')
+        
         return load(f)
             
-    def savePickle(self, NAME='birdAnalysis'):
+    def savePickle(self):
         """
         """
         from pickle import dump
-        f = open(NAME, 'w')
+        
+        f = open(self.BIRDNAME + self.DATE + self.CONDITION + '.pickle', 'w')
         dump(self.syllables, f)
 
     def returnSyllables(self):
+        """
+        """
         return self.syllables
     
 if __name__ == '__main__':
@@ -296,12 +308,8 @@ if __name__ == '__main__':
     CONDITION = 0 ## 0 = Baseline, 1 = Post Manipulation
     ANALYSIS = 1 ## Automatically compare Exp Condition to Baseline? 0 = No, \
                 #1 = Yes
-    DAY = 'Feb 2' ## Not important if Condition is 0
+    DATE = 'Feb_2' ## Not important if Condition is 0
     SYLLABLES = 5 ## Number of syllables to be analyzed
-    
-    # DISPLAY OPTIONS #
-    DISPLAYSYLL = False ## Control whether syllables are displayed.
-    DISPLAYSONG = False ## Control whether songs are displayed.
     
     # ANALYSIS OPTIONS #
     MAXFILE = 10 ## Maximum number of songs to be analyzed
@@ -309,9 +317,10 @@ if __name__ == '__main__':
     if CONDITION == 0:
         FILEDIR = (BIRDNAME+'/baseline song/')
     elif CONDITION == 1:
-        FILEDIR = (BIRDNAME+'/post-surgery song/'+DAY+'/')
+        FILEDIR = (BIRDNAME+'/post-surgery song/'+ DATE +'/')
     
     STARTFILE = 0
     
-    hand = SongAnalysis(SYLLABLES, FILEDIR)
-    data = hand.returnSyllables()
+    handle = SongAnalysis(SYLLABLES, FILEDIR, BIRDNAME, CONDITION, DATE,
+                          MAXFILE)
+    data = handle.returnSyllables()
