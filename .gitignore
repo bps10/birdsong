@@ -1,5 +1,8 @@
 *.spyderproject
 *.spyderworkspace
 *.pyc
+*.pyo
 *bird_1958/
-
+foo.py
+*.png
+*.npz

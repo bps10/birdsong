@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
-import numpy as np
 import matplotlib.pylab as plt
+import numpy as np
 import os as os
 
 os.chdir('/Users/brianschmidt/Dropbox/Python/FinalSyllAnalysis/')
@@ -14,6 +14,66 @@ dur = np.genfromtxt(BIRDNAME + '/dur.csv', delimiter=',')
 durA = np.multiply(dur**2,1000)
 color = np.arange(0,SYLLABLES)
 MEANCOLOR = 'b'
+
+DIST_NAME1 = ('DistABC_data.png')
+DIST_NAME2 = ('DistDEF_data.png')
+DUR_NAME = ('Duration.png')
+
+
+#################
+## Distribution##
+#################
+
+
+FSize=15
+plt.figure(figsize=(11,9))
+font = {'weight': 'norm', 'size': 16}
+plt.rc('font', **font)
+
+labelx = -0.21  # axes coords
+
+for syll in self.syllables:
+    #Entropy
+    ax1 = plt.subplot(211)
+    pf.AxisFormat()
+    pf.TufteAxis(ax1, ['left','bottom'])
+
+    ax1.bar(np.arange(-14,0,0.25),np.true_divide(DAE,np.sum(DAE)), 
+           width=0.2, color='r')
+    ax1.set_ylabel('Proportion', fontsize= FSize)
+    ax1.set_xlim(-14,0)
+    ax1.yaxis.set_label_coords(labelx, 0.5)
+    plt.title('Syllable ' + syll, fontsize= 20)
+
+ 
+    ax2 = plt.subplot(212)   
+    ax2.bar(np.arange(self.MINFREQ, np.max(freqs) - FREQBIN, FREQBIN), 
+          np.true_divide(DAF,np.sum(DAF)), width=50, color='r',
+                        edgecolor=None)
+    ax2.set_xlim(np.min(freqs),8000)
+    plt.xticks(np.arange(0,8001,1000), 
+               ['0','1','2','3','4','5','6','7','8'])
+    plt.title('Syllable A', fontsize=FSize)
+
+##############
+## Duration ##
+##############
+
+
+plt.figure()
+plt.bar(X,Y, color='w', linewidth=3, align='center',
+        yerr=STDev, ecolor='k',capsize=10)
+plt.title('Duration', fontsize= 20)
+plt.ylabel('Syllable Length (s)', fontsize= 20)
+plt.yticks(size='large')
+#plt.xticks(np.arange(1,SYLLABLES+1), Lables, size='large')
+plt.xlabel('Syllable', fontsize=20)
+
+plt.tight_layout()
+plt.show()
+#plt.savefig(FILEDIR + 'Analysis/' + DUR_NAME)
+
+
 
 
 ########### Entropy #############
@@ -188,3 +248,4 @@ plt.tight_layout()
 
 plt.show()
 plt.savefig(BIRDNAME+'/'+BIRDNAME + '_EucDelta.png')
+
