@@ -15,7 +15,7 @@ class SongAnalysis(object):
     """
     
     def __init__(self, SYLLABLES, FILEDIR, BIRDNAME, CONDITION, DATE,
-                 MAXFILE, MINFREQ=1250, STARTFILE=0, baseline=True,
+                 MAXFILE, MINFREQ=1250, STARTFILE=0,
                  DISPLAYSYLL=False, DISPLAYSONG=False):
         """
         """
@@ -24,26 +24,27 @@ class SongAnalysis(object):
         self.STARTFILE = STARTFILE
         self.BIRDNAME = BIRDNAME
         self.DATE = DATE
+        self.FILEDIR = FILEDIR + '/'
         if CONDITION == 0:
             self.CONDITION = 'baseline'
         else:
             self.CONDITION = 'experiment'
         
-        self.getFiles(FILEDIR)
+        self.getFiles()
         self.genDataStruct(SYLLABLES)
         self.findGoodSong()
-        self.cutSyllables(DISPLAYSYLL, DISPLAYSONG)
+        self.cutSyllables(SYLLABLES, DISPLAYSYLL, DISPLAYSONG)
         self.analysis()
         
-        if not baseline:
+        if self.CONDITION == 'experiment':
             self.findKSstat()
         self.savePickle()
         
-    def getFiles(self, FILEDIR):
+    def getFiles(self):
         """
         """
 
-        FILES = np.array(os.listdir(FILEDIR))
+        FILES = np.array(os.listdir(self.FILEDIR))
         self.wav_index = mlab.find(endswith(FILES,'.wav'))
         self.FILES = FILES[self.wav_index] 
         
@@ -58,6 +59,15 @@ class SongAnalysis(object):
                     'entropy': {},
                     'freq': {},
                         }
+ 
+        self.syllables['metadata'] = {
+                'MINFREQ': self.MINFREQ,
+                'MAXFILE': self.MAXFILE,
+                'STARTFILE': self.STARTFILE,
+                'BIRDNAME': self.BIRDNAME,
+                'DATE': self.DATE,
+                'FILEDIR': self.FILEDIR,
+        }
         
     def findGoodSong(self):
         """
@@ -65,7 +75,7 @@ class SongAnalysis(object):
         
         for i in range(self.STARTFILE, len(self.wav_index)):
 
-            FILE = (FILEDIR + self.FILES[i]) 
+            FILE = (self.FILEDIR + self.FILES[i]) 
             p, freqs, t, im = sf.spec(FILE)
             p = p
             sf.tellme('Select Song')
@@ -97,7 +107,7 @@ class SongAnalysis(object):
             if Proceed:
                 break
         
-    def cutSyllables(self, DISPLAYSYLL=False, DISPLAYSONG=False):
+    def cutSyllables(self, SYLLABLES, DISPLAYSYLL=False, DISPLAYSONG=False):
         """
         """
         
@@ -109,7 +119,7 @@ class SongAnalysis(object):
         song = 0
         fil = self.STARTFILE
         while fil < ENDFILE:
-            FILE = (FILEDIR + self.FILES[fil])
+            FILE = (self.FILEDIR + self.FILES[fil])
             print 'processing file: ', fil
             ## Spectrogram ##       
             p, freqs, t, im = sf.spec(FILE)
@@ -118,9 +128,9 @@ class SongAnalysis(object):
                                          self.THRESHOLD)
             if SongP is False:
                 plt.close(1)
-                if len(self.FILES) < MAXFILE + 1:
+                if len(self.FILES) < self.MAXFILE + 1:
                     ENDFILE = len(self.FILES)
-                elif len(self.FILES) >= MAXFILE + 1 and ENDFILE < len(
+                elif len(self.FILES) >= self.MAXFILE + 1 and ENDFILE < len(
                                                                 self.FILES):
                     ENDFILE = ENDFILE + 1
                 elif ENDFILE >= len(self.FILES):
@@ -180,9 +190,9 @@ class SongAnalysis(object):
 
                     plt.close(1)
                     plt.close(2)
-                    if len(self.FILES) < MAXFILE + 1:
+                    if len(self.FILES) < self.MAXFILE + 1:
                         ENDFILE = len(self.FILES)
-                    elif (len(self.FILES) >= MAXFILE + 1 and 
+                    elif (len(self.FILES) >= self.MAXFILE + 1 and 
                             ENDFILE < len(self.FILES)):
                                 
                         ENDFILE = ENDFILE + 1
@@ -199,76 +209,81 @@ class SongAnalysis(object):
 
         for syll in self.syllables:
             
-            #Histograms: Entropy and Frequency
-            #Entropy
-            ent = []
-            for song in self.syllables[syll]['entropy']:
-                if song is not None:
-                    
-                    ent.append(self.syllables[syll]['entropy'][song])
-            ent = np.array([num[0] for elem in ent for num in elem])
-            #print ent
-            DE_X = np.arange(-14,0.1,0.25)
-            DAE,DAE_X = np.histogram(ent, bins=DE_X, density=False)
-                                     
-            self.syllables[syll]['dbrEnt'] = DAE
-            self.syllables[syll]['binsEnt'] = DAE_X
-            
-            #Frequency                      
-            freq = []
-            for song in self.syllables[syll]['freq']:
-                if song is not None:
-                    freq.append(self.syllables[syll]['freq'][song])
-            freq = np.array([num[0] for elem in freq for num in elem])
-            
-            FREQBIN = 100
-            DF_X = np.arange(self.MINFREQ, np.max(freq), FREQBIN)
-            DAF,DAF_X = np.histogram(freq, bins=DF_X, density=False)
-                                     
-            self.syllables[syll]['dbrFreq'] = DAF
-            self.syllables[syll]['binsFreq'] = DAF_X
-            
-            
-            #Duration, mean
-            dur = []
-            for song in self.syllables[syll]['duration']:
-                if song is not None:
-                    dur.append(self.syllables[syll]['duration'][song])
-
-            self.syllables[syll]['mean'] = np.mean(dur)
-            self.syllables[syll]['std'] = np.std(dur)
-            print self.syllables[syll]['mean']
+            if syll != 'metadata':
+                #Histograms: Entropy and Frequency
+                #Entropy
+                ent = []
+                for song in self.syllables[syll]['entropy']:
+                    if song is not None:
+                        
+                        ent.append(self.syllables[syll]['entropy'][song])
+                ent = np.array([num[0] for elem in ent for num in elem])
+                #print ent
+                DE_X = np.arange(-14,0.1,0.25)
+                DAE,DAE_X = np.histogram(ent, bins=DE_X, density=False)
+                                         
+                self.syllables[syll]['dstEnt'] = DAE
+                self.syllables[syll]['binsEnt'] = DAE_X
+                
+                #Frequency                      
+                freq = []
+                for song in self.syllables[syll]['freq']:
+                    if song is not None:
+                        freq.append(self.syllables[syll]['freq'][song])
+                freq = np.array([num[0] for elem in freq for num in elem])
+                
+                FREQBIN = 100
+                DF_X = np.arange(self.MINFREQ, np.max(freq), FREQBIN)
+                DAF,DAF_X = np.histogram(freq, bins=DF_X, density=False)
+                                         
+                self.syllables[syll]['dstFreq'] = DAF
+                self.syllables[syll]['binsFreq'] = DAF_X
+                
+                
+                #Duration, mean
+                dur = []
+                for song in self.syllables[syll]['duration']:
+                    if song is not None:
+                        dur.append(self.syllables[syll]['duration'][song])
+    
+                self.syllables[syll]['mean'] = np.mean(dur)
+                self.syllables[syll]['std'] = np.std(dur)
+                print self.syllables[syll]['mean']
       
-    def findKSstat(self, NAME):                       
+    def findKSstat(self):                       
         """
         """        
         # Load baseline files for comparison:
-        baseline = self.loadPickle(NAME)
-
-        #Entropy
-        #BaseDistA_entropy = BaseSyllA_entropy.flatten(1)
-        #BaseDistA_entropy = BaseDistA_entropy[~np.isnan(BaseDistA_entropy)]
-        #Frequency    
-        #BaseDistA_freq = BaseSyllA_freq.flatten(1)
-        #BaseDistA_freq = BaseDistA_freq[~np.isnan(BaseDistA_freq)]
+        baseline = self.loadPickle(condition='baseline')
 
         # KS stats:
         for syll in self.syllables:
-            AED, AEp = stats.ks_2samp(self.syllables[syll]['dstFreq'], 
-                                     baseline[syll]['dstFreq'])
-            self.syllables[syll]['EntKS'] = AED
-            self.syllables[syll]['EntPvalKS'] = AEp
-            
-            AFD, AFp = stats.ks_2samp(self.syllables[syll]['dstEnt'], 
-                                     baseline[syll]['dstEnt'])
-            self.syllables[syll]['FreqKS'] = AFD
-            self.syllables[syll]['FreqPvalKS'] = AFp
-            
-            ADT, ADp = stats.ks_2samp(
-                                self.syllables[syll]['duration'].flatten(),
-                                     baseline['duration'])
-            self.syllables[syll]['DurKS'] = ADT
-            self.syllables[syll]['DurPvalKS'] = ADp
+            if syll != 'metadata':
+                AED, AEp = stats.ks_2samp(self.syllables[syll]['dstFreq'], 
+                                         baseline[syll]['dstFreq'])
+                self.syllables[syll]['EntKS'] = AED
+                self.syllables[syll]['EntPvalKS'] = AEp
+                print AED, AEp
+                AFD, AFp = stats.ks_2samp(self.syllables[syll]['dstEnt'], 
+                                         baseline[syll]['dstEnt'])
+                self.syllables[syll]['FreqKS'] = AFD
+                self.syllables[syll]['FreqPvalKS'] = AFp
+                print AFD, AFp
+                
+                EXPdur = []
+                for song in self.syllables[syll]['duration']:
+                    if song is not None:
+                        EXPdur.append(self.syllables[syll]['duration'][song])
+                        
+                BASEdur = []
+                for song in baseline[syll]['duration']:
+                    if song is not None:
+                        BASEdur.append(baseline[syll]['duration'][song])
+                        
+                ADT, ADp = stats.ks_2samp(EXPdur, BASEdur)
+                self.syllables[syll]['DurKS'] = ADT
+                self.syllables[syll]['DurPvalKS'] = ADp
+                print ADT, ADp            
             
     def loadPickle(self, name=None, date=None, condition=None):
         """
@@ -282,16 +297,25 @@ class SongAnalysis(object):
         if not condition:
             condition = self.CONDITION 
         
-        f = open(name + date + condition + '.pickle', 'r')
-        
+        if condition == 'baseline':
+            f = open(('analysis/' + name + '/' + name + 'baseline' +
+                    '.pickle'), 'r')
+        else:
+            f = open(('analysis/' + name + '/' + name + 'experiment' + date + 
+                    '.pickle'), 'r')        
         return load(f)
             
     def savePickle(self):
         """
         """
         from pickle import dump
+        if self.CONDITION == 'baseline':
+            f = open(('analysis/' + self.BIRDNAME + '/' + self.BIRDNAME + 
+                self.CONDITION + '.pickle'), 'w')
+        else:
         
-        f = open(self.BIRDNAME + self.DATE + self.CONDITION + '.pickle', 'w')
+            f = open(('analysis/' + self.BIRDNAME + '/' + self.BIRDNAME + 
+                self.CONDITION + self.DATE + '.pickle'), 'w')
         dump(self.syllables, f)
 
     def returnSyllables(self):
@@ -301,7 +325,7 @@ class SongAnalysis(object):
     
 if __name__ == '__main__':
     
-    os.chdir('/Users/brianschmidt/Projects/birdsong/')
+    #os.chdir('/Users/brianschmidt/Projects/birdsong/')
     
     # BIRD INFO #
     BIRDNAME = 'bird_1958'

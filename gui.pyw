@@ -22,7 +22,7 @@ class Processing(dt.DataSet):
          
 param = Processing()
 param.edit()
-print param.birdname, param.condition, param.date, param.directory
+print str(param.date).replace('-','_')
 
 SongAnalysis(param.syllables, param.directory, param.birdname, param.condition,
-             param.date, param.maxfiles)
+             str(param.date).replace('-','_'), param.maxfiles)

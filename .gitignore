@@ -7,3 +7,4 @@ foo.py
 *.png
 *.npz
 *.pickle
+build/
