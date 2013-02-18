@@ -25,52 +25,14 @@ DUR_NAME = ('Duration.png')
 #################
 
 
-FSize=15
-plt.figure(figsize=(11,9))
-font = {'weight': 'norm', 'size': 16}
-plt.rc('font', **font)
 
-labelx = -0.21  # axes coords
-
-for syll in self.syllables:
-    #Entropy
-    ax1 = plt.subplot(211)
-    pf.AxisFormat()
-    pf.TufteAxis(ax1, ['left','bottom'])
-
-    ax1.bar(np.arange(-14,0,0.25),np.true_divide(DAE,np.sum(DAE)), 
-           width=0.2, color='r')
-    ax1.set_ylabel('Proportion', fontsize= FSize)
-    ax1.set_xlim(-14,0)
-    ax1.yaxis.set_label_coords(labelx, 0.5)
-    plt.title('Syllable ' + syll, fontsize= 20)
-
- 
-    ax2 = plt.subplot(212)   
-    ax2.bar(np.arange(self.MINFREQ, np.max(freqs) - FREQBIN, FREQBIN), 
-          np.true_divide(DAF,np.sum(DAF)), width=50, color='r',
-                        edgecolor=None)
-    ax2.set_xlim(np.min(freqs),8000)
-    plt.xticks(np.arange(0,8001,1000), 
-               ['0','1','2','3','4','5','6','7','8'])
-    plt.title('Syllable A', fontsize=FSize)
 
 ##############
 ## Duration ##
 ##############
 
 
-plt.figure()
-plt.bar(X,Y, color='w', linewidth=3, align='center',
-        yerr=STDev, ecolor='k',capsize=10)
-plt.title('Duration', fontsize= 20)
-plt.ylabel('Syllable Length (s)', fontsize= 20)
-plt.yticks(size='large')
-#plt.xticks(np.arange(1,SYLLABLES+1), Lables, size='large')
-plt.xlabel('Syllable', fontsize=20)
 
-plt.tight_layout()
-plt.show()
 #plt.savefig(FILEDIR + 'Analysis/' + DUR_NAME)
 
 
@@ -78,25 +40,7 @@ plt.show()
 
 ########### Entropy #############
 
-fig = plt.figure()
-ax = fig.add_subplot(111)
-for i in range(0, len(dur[:,0])):
 
-    ax.plot(entropy[i,:], linewidth=3, marker='o', markersize=10)
-
-ax.hold(True)
-ax.set_xlabel('Day Post Surgery', fontsize=20)
-ax.set_ylabel('KS Statistic', fontsize=20)
-ax.set_title('Weiner Entropy', fontsize=20)
-plt.ylim(0,1)
-ax.grid(True)
-plt.xticks(np.arange(0,len(dur[0,:])),DPS,size=20)
-plt.yticks(size=20)
-##plt.legend(('A','B','C','D','E'), loc='upper left')
-plt.tight_layout()
-
-plt.show()
-plt.savefig(BIRDNAME+'/'+BIRDNAME + '_Entropy.png')
 
 ########### Frequency #############
 

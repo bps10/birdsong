@@ -1,6 +1,4 @@
 # -*- coding: utf-8 -*-
-
-
 """Create a stand-alone executable"""
 
 try:
@@ -34,7 +32,6 @@ def create_executable():
     spyderlib.add_to_distribution(dist)
     dist.add_data_file('gitInfo.txt')
     dist.add_modules('guidata')
-    dist.add_modules('scipy.io')
     dist.excludes += ['IPython', 'scipy', 'guiqwt']
     # Building executable
     dist.build('cx_Freeze')

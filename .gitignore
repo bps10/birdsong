@@ -8,3 +8,4 @@ foo.py
 *.npz
 *.pickle
 build/
+dist/
