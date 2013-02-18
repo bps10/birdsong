@@ -17,7 +17,7 @@ class Processing(dt.DataSet):
     date = di.DateItem("date collected")
     directory = di.DirectoryItem("file directory")
     maxfiles = di.IntItem("Max # of file to process", default=60)
-    minfreq = di.IntItem("minimum frequency", default=1250)
+    minfreq = di.IntItem("minimum frequency (Hz)", default=1250)
     startfile = di.IntItem("start file", default=0)
          
 param = Processing()
